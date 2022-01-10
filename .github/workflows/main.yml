@@ -1,0 +1,40 @@
+on: [repository_dispatch, watch]
+
+name: notion
+
+jobs:
+  notion:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+      with:
+        submodules: false
+
+    - uses: Aboysky/notion-blog-actions/notion@main
+      with:
+        token: ${{ secrets.NOTION_TOKEN }}
+        token_v2: ${{ secrets.NOTION_TOKEN_V2 }}
+        space_id: "f098bdfe996b42c8af1bdfd06bfe71f4"
+        database_id: "22a2ac969f5740c29b5cb5ea85d8acc2"
+        output: "./tmp/"
+
+    - name: "migrate image"
+      uses: Aboysky/notion-blog-actions/migrate@main
+      with:
+        input: "./tmp/*.md"
+
+    - name: "cp md files"
+      run: |
+        cp -f tmp/*.md source/_posts/notion/
+        rm -rf tmp
+
+    - name: git setting
+      run: |
+        git config --global user.email "482195983@qq.com"
+        git config --global user.name "Aboysky"
+      
+    - name: update blog
+      run: |
+        git add source
+        git commit -m "feat: auto update by notion sync"
+        git push
